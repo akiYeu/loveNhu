@@ -7,48 +7,30 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     overflow: hidden;
     background: #000;
     font-family: 'Segoe UI', sans-serif;
   }
-  canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
+    position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    text-align: center;
-    z-index: 10;
-    pointer-events: none;
-    width: 100%;
+    text-align: center; z-index: 10;
+    pointer-events: none; width: 100%;
   }
   .love-text {
     font-size: clamp(2rem, 8vw, 5rem);
     color: #fff;
-    text-shadow:
-      0 0 10px #ff0033,
-      0 0 20px #ff0033,
-      0 0 40px #ff0033,
-      0 0 80px #ff0033;
-    letter-spacing: 6px;
-    font-weight: bold;
+    text-shadow: 0 0 10px #ff0033, 0 0 20px #ff0033, 0 0 40px #ff0033, 0 0 80px #ff0033;
+    letter-spacing: 6px; font-weight: bold;
     animation: textPulse 2s ease-in-out infinite;
     margin-bottom: 20px;
   }
   .sub-text {
     font-size: clamp(1rem, 4vw, 2rem);
-    color: #ff6688;
-    letter-spacing: 4px;
-    text-shadow:
-      0 0 10px #ff0033,
-      0 0 30px #ff0033;
+    color: #ff6688; letter-spacing: 4px;
+    text-shadow: 0 0 10px #ff0033, 0 0 30px #ff0033;
     animation: fadeIn 3s ease-in-out infinite;
   }
   @keyframes textPulse {
@@ -56,8 +38,7 @@
     50% { opacity: 1; transform: scale(1.05); }
   }
   @keyframes fadeIn {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 0.6; } 50% { opacity: 1; }
   }
 </style>
 </head>
@@ -79,156 +60,121 @@ function resize() {
   height = canvas.height = window.innerHeight;
   cx = width / 2;
   cy = height / 2;
-  heartScale = Math.min(width, height) / 32;
+  heartScale = Math.min(width, height) / 35;
+  buildHeartPath();
 }
-resize();
-window.addEventListener('resize', () => { resize(); buildHeartPoints(); });
+window.addEventListener('resize', resize);
 
-// ===== Hàm tạo hình trái tim =====
-function heartPoint(t, scale) {
+// ===== Tạo đường viền trái tim =====
+let heartPath = [];
+const PATH_POINTS = 1000;
+
+function heartPoint(t) {
   const x = 16 * Math.pow(Math.sin(t), 3);
-  const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-  return { x: x * scale, y: -y * scale };
+  const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+  return { x: cx + x * heartScale, y: cy - y * heartScale };
 }
 
-// ===== Danh sách điểm trên viền trái tim =====
-let heartPoints = [];
-const HEART_POINTS_COUNT = 500;
-
-function buildHeartPoints() {
-  heartPoints = [];
-  for (let i = 0; i < HEART_POINTS_COUNT; i++) {
-    const t = (i / HEART_POINTS_COUNT) * Math.PI * 2;
-    heartPoints.push(heartPoint(t, heartScale));
+function buildHeartPath() {
+  heartPath = [];
+  for (let i = 0; i <= PATH_POINTS; i++) {
+    const t = (i / PATH_POINTS) * Math.PI * 2;
+    heartPath.push(heartPoint(t));
   }
 }
-buildHeartPoints();
 
-// ===== Hạt tạo dải băng =====
+// ===== Particle chạy dọc viền trái tim =====
 class Particle {
   constructor() {
-    // Bắt đầu từ ngoài màn hình
-    const angle = Math.random() * Math.PI * 2;
-    const dist = Math.max(width, height) * (1 + Math.random());
-    this.x = cx + Math.cos(angle) * dist;
-    this.y = cy + Math.sin(angle) * dist;
-    this.vx = 0;
-    this.vy = 0;
-    this.size = Math.random() * 1.8 + 0.8;
-    // Màu: trắng hoặc đỏ đan xen
+    this.progress = Math.random() * PATH_POINTS; // vị trí trên đường
+    this.speed = 3 + Math.random() * 4;          // tốc độ chạy
+    this.size = Math.random() * 1.5 + 0.8;
+    // Trắng hoặc đỏ
     this.color = Math.random() < 0.5
-      ? `hsla(0, 0%, 100%, 1)`          // trắng
-      : `hsla(0, 100%, 50%, 1)`;         // đỏ
+      ? `hsla(0, 0%, 100%, 0.9)`
+      : `hsla(0, 100%, 50%, 0.9)`;
     this.trace = [];
-    // Điểm đích trên trái tim
-    this.targetIndex = Math.floor(Math.random() * heartPoints.length);
-    // Tốc độ xoáy
-    this.orbitSpeed = (Math.random() - 0.5) * 0.05;
-    this.orbitAngle = 0;
-    this.orbitRadius = Math.random() * 30 + 20;
-    this.arrived = false;
-    this.delay = Math.random() * 100;
-    this.life = 0;
+    this.traceMax = 15 + Math.floor(Math.random() * 15);
+    // Lệch nhẹ khỏi viền để tạo dải dày
+    this.offset = (Math.random() - 0.5) * 30;
+    // Random thời gian trễ để hạt xuất hiện dần
+    this.delay = Math.random() * 200;
+    this.active = false;
   }
 
   update(time) {
     if (time < this.delay) return;
+    this.active = true;
 
-    if (!this.arrived) {
-      // Điểm đích
-      const target = heartPoints[this.targetIndex];
-      const tx = cx + target.x;
-      const ty = cy + target.y;
-
-      // Lực hút
-      const dx = tx - this.x;
-      const dy = ty - this.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      // Bay theo đường xoáy ốc
-      this.orbitAngle += this.orbitSpeed;
-      const offsetX = Math.cos(this.orbitAngle) * this.orbitRadius;
-      const offsetY = Math.sin(this.orbitAngle) * this.orbitRadius;
-
-      const targetX = tx + offsetX;
-      const targetY = ty + offsetY;
-
-      const dx2 = targetX - this.x;
-      const dy2 = targetY - this.y;
-
-      const force = 0.01;
-      this.vx += dx2 * force;
-      this.vy += dy2 * force;
-
-      // Tăng tốc
-      this.vx *= 1.03;
-      this.vy *= 1.03;
-
-      // Giới hạn tốc độ
-      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-      const maxSpeed = 25;
-      if (speed > maxSpeed) {
-        this.vx = (this.vx / speed) * maxSpeed;
-        this.vy = (this.vy / speed) * maxSpeed;
-      }
-
-      this.x += this.vx;
-      this.y += this.vy;
-
-      if (dist < 4) {
-        this.arrived = true;
-      }
-    } else {
-      // Sau khi đến đích, giữ nguyên
-      this.life++;
-      const target = heartPoints[this.targetIndex];
-      this.x = cx + target.x;
-      this.y = cy + target.y;
+    // Chạy dọc theo đường trái tim
+    this.progress += this.speed;
+    if (this.progress >= PATH_POINTS) {
+      this.progress -= PATH_POINTS;
+      this.trace = []; // reset trace khi hết vòng
     }
 
-    // Lưu vệt
-    this.trace.push({ x: this.x, y: this.y });
-    if (this.trace.length > 25) {
+    const idx = Math.floor(this.progress);
+    const p = heartPath[idx];
+    if (!p) return;
+
+    // Tính pháp tuyến để offset
+    const nextP = heartPath[(idx + 1) % PATH_POINTS];
+    const dx = nextP.x - p.x;
+    const dy = nextP.y - p.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    const x = p.x + nx * this.offset;
+    const y = p.y + ny * this.offset;
+
+    this.trace.push({ x, y });
+    if (this.trace.length > this.traceMax) {
       this.trace.shift();
     }
   }
 
   draw() {
-    // Vẽ vệt dài
-    if (this.trace.length > 1) {
-      ctx.beginPath();
-      ctx.moveTo(this.trace[0].x, this.trace[0].y);
-      for (let i = 1; i < this.trace.length; i++) {
-        ctx.lineTo(this.trace[i].x, this.trace[i].y);
-      }
-      ctx.strokeStyle = this.color;
-      ctx.lineWidth = this.size;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.globalAlpha = 0.6;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = this.color;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-    }
+    if (!this.active || this.trace.length < 2) return;
 
-    // Vẽ đầu hạt
+    // Vẽ vệt
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.shadowBlur = 15;
+    ctx.moveTo(this.trace[0].x, this.trace[0].y);
+    for (let i = 1; i < this.trace.length; i++) {
+      ctx.lineTo(this.trace[i].x, this.trace[i].y);
+    }
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = this.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = 0.7;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = this.color;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+
+    // Đầu hạt sáng
+    const head = this.trace[this.trace.length - 1];
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, this.size * 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.shadowBlur = 20;
     ctx.shadowColor = this.color;
     ctx.fill();
     ctx.shadowBlur = 0;
   }
 }
 
+// ===== Tạo 400 hạt =====
 const particles = [];
-const PARTICLE_COUNT = 600;
+const PARTICLE_COUNT = 400;
 
-for (let i = 0; i < PARTICLE_COUNT; i++) {
-  particles.push(new Particle());
+function init() {
+  particles.length = 0;
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push(new Particle());
+  }
 }
 
 // ===== Vòng lặp =====
@@ -237,7 +183,7 @@ function animate() {
   time++;
 
   // Xóa mờ tạo vệt sáng
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
   ctx.fillRect(0, 0, width, height);
 
   for (const p of particles) {
@@ -247,31 +193,10 @@ function animate() {
 
   requestAnimationFrame(animate);
 }
+
+resize();
+init();
 animate();
-
-// ===== Click tạo tim =====
-document.addEventListener('click', (e) => {
-  for (let i = 0; i < 12; i++) {
-    const heart = document.createElement('div');
-    heart.textContent = '❤️';
-    heart.style.position = 'fixed';
-    heart.style.left = e.clientX + 'px';
-    heart.style.top = e.clientY + 'px';
-    heart.style.fontSize = (Math.random() * 20 + 15) + 'px';
-    heart.style.pointerEvents = 'none';
-    heart.style.zIndex = '999';
-    heart.style.transition = 'all 1.5s ease-out';
-    heart.style.opacity = '1';
-    document.body.appendChild(heart);
-
-    setTimeout(() => {
-      heart.style.transform = `translate(${(Math.random() - 0.5) * 400}px, -${Math.random() * 400 + 100}px) scale(0) rotate(${Math.random() * 720}deg)`;
-      heart.style.opacity = '0';
-    }, 10);
-
-    setTimeout(() => heart.remove(), 1500);
-  }
-});
 </script>
 </body>
 </html>
