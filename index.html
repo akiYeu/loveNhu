@@ -1,235 +1,250 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>❤️ Love Neon ❤️</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background: radial-gradient(circle at center, #1a0033 0%, #0d001a 50%, #000 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      font-family: 'Segoe UI', sans-serif;
-      position: relative;
-    }
-
-    /* Ánh sáng nền */
-    .glow-bg {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% 50%, rgba(255, 0, 128, 0.15), transparent 70%);
-      animation: pulseBg 4s ease-in-out infinite;
-    }
-
-    @keyframes pulseBg {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
-
-    /* Trái tim chính */
-    .heart-container {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-    }
-
-    .heart {
-      width: 200px;
-      height: 200px;
-      position: relative;
-      animation: heartbeat 1.2s ease-in-out infinite;
-      filter: drop-shadow(0 0 30px #ff006e) drop-shadow(0 0 60px #ff006e);
-    }
-
-    .heart::before,
-    .heart::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      width: 100px;
-      height: 160px;
-      background: linear-gradient(135deg, #ff006e, #ff4d94);
-      border-radius: 100px 100px 0 0;
-    }
-
-    .heart::before {
-      left: 100px;
-      transform: rotate(-45deg);
-      transform-origin: 0 100%;
-    }
-
-    .heart::after {
-      left: 0;
-      transform: rotate(45deg);
-      transform-origin: 100% 100%;
-    }
-
-    @keyframes heartbeat {
-      0%, 100% { transform: scale(1); }
-      25% { transform: scale(1.1); }
-      50% { transform: scale(1); }
-      75% { transform: scale(1.15); }
-    }
-
-    /* Text */
-    .love-text {
-      margin-top: 50px;
-      font-size: 2.5rem;
-      color: #fff;
-      text-shadow:
-        0 0 10px #ff006e,
-        0 0 20px #ff006e,
-        0 0 40px #ff006e,
-        0 0 80px #ff006e;
-      animation: textPulse 2s ease-in-out infinite;
-      letter-spacing: 4px;
-    }
-
-    @keyframes textPulse {
-      0%, 100% { opacity: 0.8; }
-      50% { opacity: 1; }
-    }
-
-    .sub-text {
-      margin-top: 20px;
-      font-size: 1rem;
-      color: #ff9ec7;
-      letter-spacing: 2px;
-      animation: fadeIn 3s ease-in-out infinite;
-    }
-
-    @keyframes fadeIn {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
-
-    /* Tim bay */
-    .floating-hearts {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .floating-hearts span {
-      position: absolute;
-      bottom: -50px;
-      font-size: 1.5rem;
-      animation: floatUp linear infinite;
-      opacity: 0;
-    }
-
-    @keyframes floatUp {
-      0% {
-        transform: translateY(0) rotate(0deg);
-        opacity: 0;
-      }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% {
-        transform: translateY(-110vh) rotate(360deg);
-        opacity: 0;
-      }
-    }
-
-    /* Ánh sáng di chuyển */
-    .sparkle {
-      position: absolute;
-      width: 3px;
-      height: 3px;
-      background: #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #ff006e, 0 0 20px #ff006e;
-      animation: sparkleMove 5s linear infinite;
-    }
-
-    @keyframes sparkleMove {
-      0% {
-        transform: translate(0, 0);
-        opacity: 0;
-      }
-      50% { opacity: 1; }
-      100% {
-        transform: translate(100px, -100px);
-        opacity: 0;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anh Yêu Em ❤️</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: radial-gradient(circle at center, #1a0033 0%, #0d001a 50%, #000 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    position: relative;
+  }
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    pointer-events: none;
+  }
+  .love-text {
+    font-size: 3rem;
+    color: #fff;
+    text-shadow:
+      0 0 10px #ff006e,
+      0 0 20px #ff006e,
+      0 0 40px #ff006e,
+      0 0 80px #ff006e;
+    animation: textPulse 2s ease-in-out infinite;
+    letter-spacing: 4px;
+    margin-top: 40px;
+  }
+  .sub-text {
+    margin-top: 20px;
+    font-size: 1.5rem;
+    color: #ff9ec7;
+    letter-spacing: 3px;
+    animation: fadeIn 3s ease-in-out infinite;
+    text-shadow: 0 0 10px #ff006e;
+  }
+  @keyframes textPulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  @keyframes fadeIn {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  .glow-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 0, 128, 0.15), transparent 70%);
+    animation: pulseBg 4s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes pulseBg {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+</style>
 </head>
 <body>
   <div class="glow-bg"></div>
+  <canvas id="canvas"></canvas>
 
-  <div class="heart-container">
-    <div class="heart"></div>
-    <h1 class="love-text">YÊU EM ❤️</h1>
-    <p class="sub-text">Trái tim này chỉ dành cho em</p>
+  <div class="content">
+    <h1 class="love-text">Anh Yêu Em</h1>
+    <p class="sub-text">Love Như</p>
   </div>
 
-  <div class="floating-hearts" id="floatingHearts"></div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-  <script>
-    // Tạo tim bay
-    const heartsContainer = document.getElementById('floatingHearts');
-    const heartEmojis = ['❤️', '💖', '💕', '💗', '💓', '💞', '🌸', '✨'];
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
 
-    function createFloatingHeart() {
-      const span = document.createElement('span');
-      span.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
-      span.style.left = Math.random() * 100 + '%';
-      span.style.animationDuration = (Math.random() * 5 + 5) + 's';
-      span.style.fontSize = (Math.random() * 20 + 15) + 'px';
-      span.style.animationDelay = Math.random() * 2 + 's';
-      heartsContainer.appendChild(span);
+// Hàm tạo tọa độ trái tim (parametric heart)
+function heartPoint(t, scale, offsetX, offsetY) {
+  const x = 16 * Math.pow(Math.sin(t), 3);
+  const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+  return {
+    x: offsetX + x * scale,
+    y: offsetY - y * scale
+  };
+}
 
-      setTimeout(() => span.remove(), 12000);
-    }
+// Tạo danh sách điểm đích (tạo thành hình trái tim)
+const heartPoints = [];
+const totalPoints = 180;
+const scale = Math.min(W, H) / 40;
+const offsetX = W / 2;
+const offsetY = H / 2 + 40;
 
-    setInterval(createFloatingHeart, 300);
+for (let i = 0; i < totalPoints; i++) {
+  const t = (i / totalPoints) * Math.PI * 2;
+  heartPoints.push(heartPoint(t, scale, offsetX, offsetY));
+}
 
-    // Tạo sparkle
-    function createSparkle() {
-      const sparkle = document.createElement('div');
-      sparkle.className = 'sparkle';
-      sparkle.style.left = Math.random() * 100 + '%';
-      sparkle.style.top = Math.random() * 100 + '%';
-      sparkle.style.animationDuration = (Math.random() * 3 + 2) + 's';
-      document.body.appendChild(sparkle);
-      setTimeout(() => sparkle.remove(), 5000);
-    }
+// Hạt
+class Particle {
+  constructor(target) {
+    this.target = target;
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.vx = 0;
+    this.vy = 0;
+    this.size = Math.random() * 2 + 1;
+    this.color = `hsl(${330 + Math.random() * 30}, 100%, ${60 + Math.random() * 20}%)`;
+    this.arrived = false;
+    this.fadeTimer = 0;
+  }
 
-    setInterval(createSparkle, 500);
+  update() {
+    if (!this.arrived) {
+      const dx = this.target.x - this.x;
+      const dy = this.target.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Click để tạo thêm tim
-    document.addEventListener('click', (e) => {
-      for (let i = 0; i < 5; i++) {
-        const heart = document.createElement('span');
-        heart.textContent = '💖';
-        heart.style.position = 'fixed';
-        heart.style.left = e.clientX + 'px';
-        heart.style.top = e.clientY + 'px';
-        heart.style.fontSize = '30px';
-        heart.style.pointerEvents = 'none';
-        heart.style.zIndex = '999';
-        heart.style.transition = 'all 1.5s ease-out';
-        document.body.appendChild(heart);
+      // Hút về đích với gia tốc mềm
+      const force = 0.05;
+      this.vx += dx * force * 0.02;
+      this.vy += dy * force * 0.02;
 
-        setTimeout(() => {
-          heart.style.transform = `translate(${(Math.random() - 0.5) * 300}px, -300px) scale(0)`;
-          heart.style.opacity = '0';
-        }, 10);
-
-        setTimeout(() => heart.remove(), 1500);
+      // Giới hạn tốc độ
+      const maxSpeed = 8;
+      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+      if (speed > maxSpeed) {
+        this.vx = (this.vx / speed) * maxSpeed;
+        this.vy = (this.vy / speed) * maxSpeed;
       }
-    });
-  </script>
+
+      // Ma sát
+      this.vx *= 0.95;
+      this.vy *= 0.95;
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      if (dist < 3) {
+        this.arrived = true;
+      }
+    } else {
+      // Sau khi đến đích, dao động nhẹ
+      this.fadeTimer += 0.05;
+      this.x = this.target.x + Math.sin(this.fadeTimer) * 1.5;
+      this.y = this.target.y + Math.cos(this.fadeTimer) * 1.5;
+    }
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = this.color;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+const particles = heartPoints.map(p => new Particle(p));
+
+// Hạt bay lơ lửng xung quanh
+const ambientParticles = [];
+for (let i = 0; i < 40; i++) {
+  ambientParticles.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    size: Math.random() * 1.5 + 0.5,
+    speedX: (Math.random() - 0.5) * 0.3,
+    speedY: (Math.random() - 0.5) * 0.3,
+    color: `hsl(${330 + Math.random() * 30}, 100%, 70%)`
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Hạt nền
+  for (const p of ambientParticles) {
+    p.x += p.speedX;
+    p.y += p.speedY;
+    if (p.x < 0) p.x = W;
+    if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H;
+    if (p.y > H) p.y = 0;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = 0.5;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Hạt tạo trái tim
+  for (const p of particles) {
+    p.update();
+    p.draw();
+  }
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+// Click tạo tim bay
+document.addEventListener('click', (e) => {
+  for (let i = 0; i < 8; i++) {
+    const heart = document.createElement('div');
+    heart.textContent = '❤️';
+    heart.style.position = 'fixed';
+    heart.style.left = e.clientX + 'px';
+    heart.style.top = e.clientY + 'px';
+    heart.style.fontSize = (Math.random() * 20 + 15) + 'px';
+    heart.style.pointerEvents = 'none';
+    heart.style.zIndex = '999';
+    heart.style.transition = 'all 1.5s ease-out';
+    heart.style.opacity = '1';
+    document.body.appendChild(heart);
+
+    setTimeout(() => {
+      heart.style.transform = `translate(${(Math.random() - 0.5) * 400}px, -${Math.random() * 400 + 100}px) scale(0) rotate(${Math.random() * 360}deg)`;
+      heart.style.opacity = '0';
+    }, 10);
+
+    setTimeout(() => heart.remove(), 1500);
+  }
+});
+</script>
 </body>
 </html>
