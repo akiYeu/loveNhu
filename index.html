@@ -79,160 +79,170 @@ function resize() {
   height = canvas.height = window.innerHeight;
   cx = width / 2;
   cy = height / 2;
-  heartScale = Math.min(width, height) / 35;
+  heartScale = Math.min(width, height) / 32;
 }
 resize();
-window.addEventListener('resize', () => { resize(); buildHeart(); });
+window.addEventListener('resize', () => { resize(); buildHeartPoints(); });
 
 // ===== Hàm tạo hình trái tim =====
-function heartPoint(t) {
+function heartPoint(t, scale) {
   const x = 16 * Math.pow(Math.sin(t), 3);
   const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-  return { x: cx + x * heartScale, y: cy - y * heartScale };
+  return { x: x * scale, y: -y * scale };
 }
 
-// ===== Tạo danh sách điểm trái tim =====
+// ===== Danh sách điểm trên viền trái tim =====
 let heartPoints = [];
-const HEART_POINTS_COUNT = 400;
+const HEART_POINTS_COUNT = 500;
 
-function buildHeart() {
+function buildHeartPoints() {
   heartPoints = [];
   for (let i = 0; i < HEART_POINTS_COUNT; i++) {
     const t = (i / HEART_POINTS_COUNT) * Math.PI * 2;
-    heartPoints.push(heartPoint(t));
-  }
-  // Thêm điểm bên trong trái tim
-  for (let i = 0; i < HEART_POINTS_COUNT * 0.5; i++) {
-    const t = Math.random() * Math.PI * 2;
-    const r = Math.random() * 0.9;
-    const x = 16 * Math.pow(Math.sin(t), 3) * r;
-    const y = (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * r;
-    heartPoints.push({ x: cx + x * heartScale, y: cy - y * heartScale });
+    heartPoints.push(heartPoint(t, heartScale));
   }
 }
-buildHeart();
+buildHeartPoints();
 
-// ===== Config =====
-const TRACE_COUNT = 20; // độ dài vệt
-const TRACE_K = 0.4;
-const TIME_DELTA = 0.01;
+// ===== Hạt tạo dải băng =====
+class Particle {
+  constructor() {
+    // Bắt đầu từ ngoài màn hình
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.max(width, height) * (1 + Math.random());
+    this.x = cx + Math.cos(angle) * dist;
+    this.y = cy + Math.sin(angle) * dist;
+    this.vx = 0;
+    this.vy = 0;
+    this.size = Math.random() * 1.8 + 0.8;
+    // Màu: trắng hoặc đỏ đan xen
+    this.color = Math.random() < 0.5
+      ? `hsla(0, 0%, 100%, 1)`          // trắng
+      : `hsla(0, 100%, 50%, 1)`;         // đỏ
+    this.trace = [];
+    // Điểm đích trên trái tim
+    this.targetIndex = Math.floor(Math.random() * heartPoints.length);
+    // Tốc độ xoáy
+    this.orbitSpeed = (Math.random() - 0.5) * 0.05;
+    this.orbitAngle = 0;
+    this.orbitRadius = Math.random() * 30 + 20;
+    this.arrived = false;
+    this.delay = Math.random() * 100;
+    this.life = 0;
+  }
 
-// ===== Particles =====
+  update(time) {
+    if (time < this.delay) return;
+
+    if (!this.arrived) {
+      // Điểm đích
+      const target = heartPoints[this.targetIndex];
+      const tx = cx + target.x;
+      const ty = cy + target.y;
+
+      // Lực hút
+      const dx = tx - this.x;
+      const dy = ty - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Bay theo đường xoáy ốc
+      this.orbitAngle += this.orbitSpeed;
+      const offsetX = Math.cos(this.orbitAngle) * this.orbitRadius;
+      const offsetY = Math.sin(this.orbitAngle) * this.orbitRadius;
+
+      const targetX = tx + offsetX;
+      const targetY = ty + offsetY;
+
+      const dx2 = targetX - this.x;
+      const dy2 = targetY - this.y;
+
+      const force = 0.01;
+      this.vx += dx2 * force;
+      this.vy += dy2 * force;
+
+      // Tăng tốc
+      this.vx *= 1.03;
+      this.vy *= 1.03;
+
+      // Giới hạn tốc độ
+      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+      const maxSpeed = 25;
+      if (speed > maxSpeed) {
+        this.vx = (this.vx / speed) * maxSpeed;
+        this.vy = (this.vy / speed) * maxSpeed;
+      }
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      if (dist < 4) {
+        this.arrived = true;
+      }
+    } else {
+      // Sau khi đến đích, giữ nguyên
+      this.life++;
+      const target = heartPoints[this.targetIndex];
+      this.x = cx + target.x;
+      this.y = cy + target.y;
+    }
+
+    // Lưu vệt
+    this.trace.push({ x: this.x, y: this.y });
+    if (this.trace.length > 25) {
+      this.trace.shift();
+    }
+  }
+
+  draw() {
+    // Vẽ vệt dài
+    if (this.trace.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(this.trace[0].x, this.trace[0].y);
+      for (let i = 1; i < this.trace.length; i++) {
+        ctx.lineTo(this.trace[i].x, this.trace[i].y);
+      }
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = this.size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = 0.6;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = this.color;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+
+    // Vẽ đầu hạt
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = this.color;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
 const particles = [];
-const PARTICLES_COUNT = 800;
+const PARTICLE_COUNT = 600;
 
-for (let i = 0; i < PARTICLES_COUNT; i++) {
-  const target = heartPoints[Math.floor(Math.random() * heartPoints.length)];
-  // Bắt đầu từ ngoài màn hình
-  const angle = Math.random() * Math.PI * 2;
-  const dist = Math.max(width, height) * (1 + Math.random());
-  particles.push({
-    x: cx + Math.cos(angle) * dist,
-    y: cy + Math.sin(angle) * dist,
-    vx: 0,
-    vy: 0,
-    targetX: target.x,
-    targetY: target.y,
-    speed: Math.random() * 3 + 2,
-    // Màu: hồng nhạt (light 60-90%) hoặc đỏ (light 40-60%)
-    color: Math.random() < 0.5
-      ? `hsla(0, 100%, ${60 + Math.random() * 30}%, 1)`  // đỏ tươi
-      : `hsla(340, 100%, ${70 + Math.random() * 25}%, 1)`, // hồng nhạt
-    trace: [],
-    size: Math.random() * 1.5 + 0.8,
-    arrived: false,
-    // Random thời gian trễ để hạt bay không đều
-    delay: Math.random() * 300
-  });
-}
-
-// ===== Vẽ vệt =====
-function drawTrace(p) {
-  if (p.trace.length < 2) return;
-  ctx.beginPath();
-  ctx.moveTo(p.trace[0].x, p.trace[0].y);
-  for (let i = 1; i < p.trace.length; i++) {
-    ctx.lineTo(p.trace[i].x, p.trace[i].y);
-  }
-  ctx.strokeStyle = p.color;
-  ctx.lineWidth = p.size;
-  ctx.lineCap = 'round';
-  ctx.globalAlpha = 0.7;
-  ctx.shadowBlur = 8;
-  ctx.shadowColor = p.color;
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-  ctx.shadowBlur = 0;
-}
-
-// ===== Cập nhật particle =====
-function updateParticle(p, time) {
-  if (time < p.delay) return;
-
-  if (!p.arrived) {
-    const dx = p.targetX - p.x;
-    const dy = p.targetY - p.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    // Lực hút tăng dần
-    const force = 0.008;
-    p.vx += dx * force;
-    p.vy += dy * force;
-
-    // Tăng tốc
-    p.vx *= 1.02;
-    p.vy *= 1.02;
-
-    // Giới hạn tốc độ
-    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-    const maxSpeed = 30;
-    if (speed > maxSpeed) {
-      p.vx = (p.vx / speed) * maxSpeed;
-      p.vy = (p.vy / speed) * maxSpeed;
-    }
-
-    p.x += p.vx * p.speed * 0.3;
-    p.y += p.vy * p.speed * 0.3;
-
-    if (dist < 3) {
-      p.arrived = true;
-      p.x = p.targetX;
-      p.y = p.targetY;
-    }
-  } else {
-    // Sau khi đến đích, chỉ giữ nguyên
-    p.x = p.targetX + (Math.random() - 0.5) * 0.5;
-    p.y = p.targetY + (Math.random() - 0.5) * 0.5;
-  }
-
-  // Cập nhật trace
-  p.trace.push({ x: p.x, y: p.y });
-  if (p.trace.length > TRACE_COUNT) {
-    p.trace.shift();
-  }
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  particles.push(new Particle());
 }
 
 // ===== Vòng lặp =====
 let time = 0;
 function animate() {
-  time += 1;
+  time++;
 
-  // Xóa mờ (tạo vệt sáng lâu)
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+  // Xóa mờ tạo vệt sáng
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
   ctx.fillRect(0, 0, width, height);
 
   for (const p of particles) {
-    updateParticle(p, time);
-    drawTrace(p);
-
-    // Vẽ đầu hạt
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fillStyle = p.color;
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = p.color;
-    ctx.fill();
-    ctx.shadowBlur = 0;
+    p.update(time);
+    p.draw();
   }
 
   requestAnimationFrame(animate);
